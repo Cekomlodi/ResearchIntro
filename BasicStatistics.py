@@ -126,7 +126,7 @@ def flatDist(range_start, range_end, num, value):
 
 def flatTarget(x):
     if 3<=x or x <=7:
-        x_value = x
+        x_value = 1
     else:
         x_value = 0
     return x_value
