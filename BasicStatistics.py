@@ -18,6 +18,7 @@ Created on Tue Feb  4 14:31:15 2025
 import numpy as np
 import matplotlib.pyplot as plt
 import math as m
+import random
 
 n = np.arange(1,11,1)
 k = 4**n
@@ -50,32 +51,126 @@ plt.ylabel('value')
 #2. Draw a random number 0<r<1 from the uniform distribution
 #3. if f(thetaprime)/f(thetak) > r then thetaprime becomes the newest sample, else it gets discarded
 
-#gaussian density function with mean 2 and variance 2 (note that variance is the square of standard dev)
-# =============================================================================
-# mea = 2
-# stdev = m.sqrt(2)
-# propdev = m.sqrt(1)
-# x = np.random.random_sample()
-# x1 = 0
-# 
-# for i in range(0, 10**4):
-#     propdist = 1/(propdev*m.sqrt(2*m.pi))*m.exp(-0.5*((x1-x)/propdev)**2) 
-#     px = 1/(stdev*m.sqrt(2*m.pi))*m.exp(-.5*((propdist-mea)/stdev)**2)
-#     if px/propdist < x:
-#         px = x
-# =============================================================================
-
 #for the love of god, graph a gaussian
+#lovely, alright.
 
-x = np.linspace(-1,5, num = 50)
-gausspx = ([])
-for i in range(0, len(x)):
-    px = (1/(m.sqrt(2)*m.sqrt(2*m.pi)))*m.exp(-0.5*((x[i] - 2)/m.sqrt(2))**2)
-    gausspx.append(px)
+# =============================================================================
+#Lets write out the parameters and equations
+
+# x = 0
+# xprime = np.linspace(-1,5, num = 50)
+# uniformdist = gausspx
+# r = np.random.sample(uniformdist, 1)
+# numberofsamples = range(0,10**4)
+# proposaldist = (1/(m.sqrt(1)*m.sqrt(2*m.pi)))*m.exp(-0.5*((xprime - x)/m.sqrt(1))**2)
+# thetaprime = np.random.sample(proposaldist,1)
+# acceptableness = np.log(thetaprime)-np.log(thetak) >> np.log(r)
+# =============================================================================
+
+#rewriting everything above but furture proofed
+
+def target(x):
+    px = (1/(m.sqrt(2)*m.sqrt(2*m.pi)))*m.exp(-0.5*((x - 2)/m.sqrt(2))**2)
+    return px
     
-fig, ax = plt.subplots(figsize = (20,10))
-ax.plot(x, gausspx, label = 'standard gauss')
+def ProposalDraw(x):
+    return np.random.normal(x,1)
+    
+def ProposalDist(v,x):#x represents the current guess
+    pd = (1/(m.sqrt(1)*m.sqrt(2*m.pi)))*m.exp(-0.5*((v - x)/m.sqrt(1))**2)
+    return pd
+
+
+def MHMCMC(minimumguess, maximumchain, initial_guess):
+    x = initial_guess
+    accepted_values = []
+    for i in range(minimumguess,maximumchain):
+        #draw a random proposal
+        new_x = ProposalDraw(x)
+        #create a ratio
+        acceptablenessRatio = target(new_x)/target(x)
+        if random.random() < acceptablenessRatio:
+            x = new_x
+            accepted_values.append(x)
+    return accepted_values
+
+accepted_values = MHMCMC(0,10**4, 0)
+        
+x_range = np.linspace(-2,6, num = 50)
+gausspx = ([])
+for i in range(0, len(x_range)):
+    px = (1/(m.sqrt(2)*m.sqrt(2*m.pi)))*m.exp(-0.5*((x_range[i] - 2)/m.sqrt(2))**2)
+    gausspx.append(px)
+
+
+fig, ax = plt.subplots(figsize = (10,5)) 
+ax.hist(accepted_values, density = True, bins = 50, color = 'silver') #The density section is important
+ax.plot(x_range, gausspx, label = 'standard gauss', color = 'teal')
 ax.axvline(x = 2, linestyle = '--')
+ax.set_title('Metropolis-Hastings Basic MCMC')
+# =============================================================================
+# 
+# #Redo problem 2 with 3<x<7 and zero everywhere else, what change had to be made?
+# 
+# =============================================================================
+def flatDist(range_start, range_end, num, value):
+    y_values = []
+    for i in np.linspace(range_start, range_end, num):
+        if 4 < i < 8:
+            y1 = (1/4)*value
+            y_values.append(y1)
+        else:
+            y2 = 0
+            y_values.append(y2)
+    return y_values
+
+def flatTarget(x):
+    if 3<=x or x <=7:
+        x_value = x
+    else:
+        x_value = 0
+    return x_value
+
+def MHMCMC_flat(maximumchain):
+    x = np.random.uniform(3,7)
+    accepted_values = []
+    for i in range(0,maximumchain):
+        #draw a random proposal
+        new_x = np.random.uniform(3,7)
+        #make the ratio
+        acceptablenessRatio = flatTarget(new_x)/flatTarget(x)
+        #see if the ratio fits
+        if np.random.random() < acceptablenessRatio:
+            x = new_x
+            accepted_values.append(x)
+        else:
+            x = x
+            accepted_values.append(x)
+    return accepted_values
+
+
+normalDist = flatDist(1,10,1000, 1)
+flat_range = np.linspace(0,9, num = len(normalDist))
+
+flatvalues = MHMCMC_flat(10**4)
+
+fig, ax = plt.subplots(figsize = (10,5)) 
+ax.hist(flatvalues, density = True, bins = 16, color = 'silver') #The density section is important
+ax.plot(flat_range, normalDist, label = 'flat dist', color = 'teal')
+ax.set_xticks([1,2,3,4,5,6,7,8,9])
+ax.set_xlim([1,9])
+ax.set_title('M-H MCMC Top Hat')
+
+#use the python random number as my proposal
+
+# =============================================================================
+#
+# number 4
+# 
+# =============================================================================
+
+#use random number generator that pulls from a gaussian for 4
+#making a random number generator without a list
         
 
 
