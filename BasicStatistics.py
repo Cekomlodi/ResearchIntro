@@ -132,27 +132,28 @@ def flatTarget(x):
     return x_value
 
 def MHMCMC_flat(maximumchain):
-    x = np.random.uniform(3,7)
-    accepted_values = []
+    xi = np.random.uniform(3,7)
+    new_x_samples = []
+    accepted_valuesflat = []
     for i in range(0,maximumchain):
         #draw a random proposal
-        new_x = np.random.uniform(3,7)
+        yi = np.random.uniform(3,7)
+        new_x_samples.append(yi)
         #make the ratio
-        acceptablenessRatio = flatTarget(new_x)/flatTarget(x)
+        k = flatTarget(yi)/flatTarget(xi) 
         #see if the ratio fits
-        if np.random.random() < acceptablenessRatio:
-            x = new_x
-            accepted_values.append(x)
+        if random.random() > k: #alpha greater than k
+            accepted_valuesflat.append(yi)
+            xi = yi
         else:
-            x = x
-            accepted_values.append(x)
-    return accepted_values
+            accepted_valuesflat.append(xi)
+    return accepted_valuesflat, new_x_samples
 
 
 normalDist = flatDist(1,10,1000, 1)
 flat_range = np.linspace(0,9, num = len(normalDist))
 
-flatvalues = MHMCMC_flat(10**4)
+flatvalues, x_samples = MHMCMC_flat(10**4)
 
 fig, ax = plt.subplots(figsize = (10,5)) 
 ax.hist(flatvalues, density = True, bins = 16, color = 'silver') #The density section is important
@@ -160,6 +161,13 @@ ax.plot(flat_range, normalDist, label = 'flat dist', color = 'teal')
 ax.set_xticks([1,2,3,4,5,6,7,8,9])
 ax.set_xlim([1,9])
 ax.set_title('M-H MCMC Top Hat')
+
+
+fig, ax = plt.subplots(figsize = (10,5)) 
+ax.hist(x_samples, density = True, bins = 16, color = 'silver')
+ax.plot(flat_range, normalDist, label = 'flat dist', color = 'teal')
+ax.set_xticks([1,2,3,4,5,6,7,8,9])
+ax.set_xlim([1,9])
 
 #use the python random number as my proposal
 
