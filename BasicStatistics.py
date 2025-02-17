@@ -125,7 +125,7 @@ def flatDist(range_start, range_end, num, value):
     return y_values
 
 def flatTarget(x):
-    if 3<=x or x <=7:
+    if 3<=x and x <=7:
         x_value = 1
     else:
         x_value = 0
@@ -133,27 +133,24 @@ def flatTarget(x):
 
 def MHMCMC_flat(maximumchain):
     xi = np.random.uniform(3,7)
-    new_x_samples = []
     accepted_valuesflat = []
     for i in range(0,maximumchain):
         #draw a random proposal
         yi = np.random.uniform(3,7)
-        new_x_samples.append(yi)
         #make the ratio
-        k = flatTarget(yi)/flatTarget(xi) 
+        HastingsRatio = flatTarget(yi)/flatTarget(xi) 
         #see if the ratio fits
-        if random.random() > k: #alpha greater than k
+        if random.random() < HastingsRatio:
             accepted_valuesflat.append(yi)
             xi = yi
         else:
             accepted_valuesflat.append(xi)
-    return accepted_valuesflat, new_x_samples
-
+    return accepted_valuesflat
 
 normalDist = flatDist(1,10,1000, 1)
 flat_range = np.linspace(0,9, num = len(normalDist))
 
-flatvalues, x_samples = MHMCMC_flat(10**4)
+flatvalues = MHMCMC_flat(10**4)
 
 fig, ax = plt.subplots(figsize = (10,5)) 
 ax.hist(flatvalues, density = True, bins = 16, color = 'silver') #The density section is important
@@ -163,12 +160,6 @@ ax.set_xlim([1,9])
 ax.set_title('M-H MCMC Top Hat')
 
 
-fig, ax = plt.subplots(figsize = (10,5)) 
-ax.hist(x_samples, density = True, bins = 16, color = 'silver')
-ax.plot(flat_range, normalDist, label = 'flat dist', color = 'teal')
-ax.set_xticks([1,2,3,4,5,6,7,8,9])
-ax.set_xlim([1,9])
-
 #use the python random number as my proposal
 
 # =============================================================================
@@ -177,8 +168,77 @@ ax.set_xlim([1,9])
 # 
 # =============================================================================
 
-#use random number generator that pulls from a gaussian for 4
 #making a random number generator without a list
+
+#first density function (p(x)) is v = ([2, 1.2],[1.2, 2])
+#rectangular to hat function that is uniform 3<x<7 and 1<y<9
+#for the proposal use a two dimensional gaussian with mean at x,y and variance tensor set to the
+#two dimensional identity 
+from scipy.linalg import expm
+
+def CovGaussian(mean, variance, x):
+    invVar = np.linalg.inv(variance)
+    step1 = np.matmul(np.transpose(x-mean), (invVar))
+    px = (1/((2*m.pi)*(np.linalg.det(variance)**(1/2))))*np.exp(-0.5*(np.matmul(step1,(x-mean))))
+    return px
+
+def NormalCovGaussian(x):
+    variance = np.array([[1,0],[0,1]])
+    invVar = np.linalg.inv(variance)
+    step1 = np.matmul(np.transpose(x-mean), (invVar))
+    px = (1/(((2*m.pi))*np.linalg.det(variance)**(-1/2)))*np.exp(-0.5*(np.matmul(step1,(x))))
+    return px
+
+def TwoDim(maximumchain):
+    densityvariance = np.array([[2, 1.2],[1.2, 2]])
+    mean = np.array([[0],[0]])
+    #x_gauss = CovGaussian(mean, densityvariance, np.random.uniform(-4,4,size=(2, 1)))
+    x_gauss = np.random.normal(0,size = (2,1))
+    x_flat = np.array([[np.random.uniform(3,7)], [np.random.uniform(1,9)]])
+    x_nonnormal = x_gauss*x_flat
+    x = x_nonnormal#/np.max(x_nonnormal)
+    acceptedvalues_x = []
+    acceptedvalues_y = []
+    for i in range(0, maximumchain):
+        #x_new1 = CovGaussian(mean, densityvariance, np.random.normal(size=(2, 1)))
+        x_new1 = np.random.normal(0,size = (2,1))
+        x_new2 = np.array([[np.random.uniform(3,7)], [np.random.uniform(1,9)]])
+        x_new_norm = x_new1*x_new2
+        x_new = x_new_norm#/np.max(x_new_norm)
+        HastingsRatio = NormalCovGaussian(x_new)/NormalCovGaussian(x)
+        #HastingsRatio = (NormalCovGaussian(x_new)*np.array([[flatDist(3, 7, 1, 1)],[flatDist(1, 9, 1, 1)]]))/(NormalCovGaussian(x)*np.array([[flatDist(3, 7, 1, 1)],[flatDist(1, 9, 1, 1)]]))
+        if random.random() < HastingsRatio:
+            x = x_new
+            acceptedvalues_x.append(x[0])
+            acceptedvalues_y.append(x[1])
+        else:
+            acceptedvalues_x.append(x[0])
+            acceptedvalues_y.append(x[1])
+    acceptedvalues_x = np.concatenate(acceptedvalues_x, axis=0)
+    acceptedvalues_y = np.concatenate(acceptedvalues_y, axis=0)
+    return acceptedvalues_x, acceptedvalues_y
+
+
+x,y = TwoDim(10**4)
+fig, ax = plt.subplots(2, 2, figsize = (10,10)) 
+ax[0,1].set_visible(False)
+ax[0,0].hist(x, density = True, bins = 20, color= 'teal')
+ax[1,1].hist(y, density = True, bins = 20, color= 'teal')
+ax[1,0].scatter(x, y, alpha = .1, color = 'teal', s = 20)
+ax[0,0].set_xlim([-4,4])
+ax[0,0].set_ylim([0,.5])
+ax[1,1].set_xlim([-4,4])
+ax[1,1].set_ylim([0,.5])
+fig.suptitle('Two Variable MCMC :)', y = .91, size = 'xx-large')
+
+
+# =============================================================================
+
+#=============================================================================
         
+    
+        
+
+
 
 
