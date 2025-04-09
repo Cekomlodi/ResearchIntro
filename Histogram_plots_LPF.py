@@ -239,38 +239,40 @@ print("data shape: ",data.shape)
 icross=int(data.shape[0]/downfac)
 datad=data[0:downfac*icross].reshape(downfac,icross,ncol)[0]
 
-for iface in range(10):
-    x=np.array([t[4] for t in data if abs(t[8])==iface])
-    y=np.array([t[5] for t in data if abs(t[8])==iface])
-    xd=np.array([t[4] for t in datad if abs(t[8])==iface])
-    yd=np.array([t[5] for t in datad if abs(t[8])==iface])
-    plotarea=fa[iface]
-    plotareatop=3.326652
-    if(iface>7): #for consistent plot densities we want the area of the full rectangle rather than the octagon face area
-        plotarea=plotareatop
-    nbins=round(math.sqrt(plotarea/plotareatop)*50) #########edited
-    #n, bins, patches = plt.hist2d(x,y, bins=nbins)
-    n, xbins, ybins = np.histogram2d(x,y, bins=nbins)
-    im = plt.imshow(n, interpolation='nearest', origin='lower',extent=[xbins[0], xbins[-1], ybins[0], ybins[-1]])
-    plt.title('impact point density on face '+str(iface))
-    plt.xlabel('x')
-    plt.ylabel('y')
-    pp.savefig()
-    plt.clf()
-    #print xd,yd
-    print(np.shape(xd))
-    plt.scatter(xd,yd)
-    plt.xlim(xbins[0], xbins[-1])
-    plt.ylim(ybins[0], ybins[-1])
-    plt.title('impact point scatter on face '+str(iface))
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.grid(True)
-    #plt.show()
-    pp.savefig()
-    plt.clf()
-
-pp.close()
+# =============================================================================
+# for iface in range(10):
+#     x=np.array([t[4] for t in data if abs(t[8])==iface])
+#     y=np.array([t[5] for t in data if abs(t[8])==iface])
+#     xd=np.array([t[4] for t in datad if abs(t[8])==iface])
+#     yd=np.array([t[5] for t in datad if abs(t[8])==iface])
+#     plotarea=fa[iface]
+#     plotareatop=3.326652
+#     if(iface>7): #for consistent plot densities we want the area of the full rectangle rather than the octagon face area
+#         plotarea=plotareatop
+#     nbins=round(math.sqrt(plotarea/plotareatop)*50) #########edited
+#     #n, bins, patches = plt.hist2d(x,y, bins=nbins)
+#     n, xbins, ybins = np.histogram2d(x,y, bins=nbins)
+#     im = plt.imshow(n, interpolation='nearest', origin='lower',extent=[xbins[0], xbins[-1], ybins[0], ybins[-1]])
+#     plt.title('impact point density on face '+str(iface))
+#     plt.xlabel('x')
+#     plt.ylabel('y')
+#     pp.savefig()
+#     plt.clf()
+#     #print xd,yd
+#     print(np.shape(xd))
+#     plt.scatter(xd,yd)
+#     plt.xlim(xbins[0], xbins[-1])
+#     plt.ylim(ybins[0], ybins[-1])
+#     plt.title('impact point scatter on face '+str(iface))
+#     plt.xlabel('x')
+#     plt.ylabel('y')
+#     plt.grid(True)
+#     #plt.show()
+#     pp.savefig()
+#     plt.clf()
+# 
+# pp.close()
+# =============================================================================
 
 
 ########## dont touch anything above this line ##################
@@ -423,7 +425,7 @@ axd['right'].hist2d(df['longi'], df['coslat'], cmap = 'inferno', bins = 50)
 
 from matplotlib.animation import FFMpegWriter
 
-def AnimateSkyLoc(xloc, yloc, maploc, lat, long, downsample, mp4Name):
+def AnimateSkyLoc(lat, long, downsample, mp4Name):
     
     gs_kw = dict(width_ratios=[1, 1], height_ratios=[.75, .75])
     layout_pattern = [['upper left','right'], ['lower left', 'right']]
@@ -432,16 +434,16 @@ def AnimateSkyLoc(xloc, yloc, maploc, lat, long, downsample, mp4Name):
 
     writer = FFMpegWriter(fps=100, metadata=dict(artist='Me'))
     xlist = np.arange(1, len(lat)+1, step = 1)
-    l, = axd[xloc].plot([],[], color = 'steelblue')
-    l2, = axd[yloc].plot([],[], color = 'steelblue')
+    l, = axd['upper left'].plot([],[], color = 'steelblue')
+    l2, = axd['lower left'].plot([],[], color = 'steelblue')
     
-    axd[xloc].set_xlim([0, len(long)])
-    axd[xloc].set_ylim([min(long), max(long)])
-    axd[yloc].set_xlim([0, len(lat)])
-    axd[yloc].set_ylim([min(lat), max(lat)])
+    axd['upper left'].set_xlim([0, len(long)])
+    axd['upper left'].set_ylim([min(long), max(long)])
+    axd['lower left'].set_xlim([0, len(lat)])
+    axd['lower left'].set_ylim([min(lat), max(lat)])
     
-    axd[maploc].set_xlim([min(long), max(long)])
-    axd[maploc].set_ylim([min(lat), max(lat)])
+    axd['right'].set_xlim([min(long), max(long)])
+    axd['right'].set_ylim([min(lat), max(lat)])
     
     with writer.saving(fig, mp4Name, 100):
         for i in range(0, len(lat)):
@@ -451,11 +453,11 @@ def AnimateSkyLoc(xloc, yloc, maploc, lat, long, downsample, mp4Name):
                 l.set_data(xlist[:i],long.head(i))
                 l2.set_data(xlist[:i],lat.head(i))
                 #Histograms
-                axd[maploc].hist2d(long.head(i), lat.head(i), bins = 50, cmap = 'Blues')
+                axd['right'].hist2d(long.head(i), lat.head(i), bins = 50, cmap = 'Blues')
                 #Grab the frame
                 writer.grab_frame()
                 
-                axd[maploc].clear()
+                axd['right'].clear()
             else:
                 continue
 
@@ -463,79 +465,116 @@ def AnimateSkyLoc(xloc, yloc, maploc, lat, long, downsample, mp4Name):
 #%%
 
 #Set up variables
-mp4Name = "SkyMapAttempt3.mp4"
-xloc = 'upper left'
-yloc = 'lower left'
-maploc = 'right'
+mp4Name = "SkyMapAttempt4.mp4"
 lat = df['coslat']
 long = df['longi']
 downsample = 1000
 
-AnimateSkyLoc(xloc, yloc, maploc, lat, long, downsample, mp4Name)
+AnimateSkyLoc(lat, long, downsample, mp4Name)
+
 
 #%%
 
+def D3scatter(x, y, z, mp4name, downsample):
+    fig = plt.figure()
+    writer = FFMpegWriter(fps=100, metadata=dict(artist='Me'))
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    
+    
+    
+    with writer.saving(fig, mp4Name, 100):
+            
+        for i in range(0, len(x)):
+                ax.set_xlim([min(x), max(x)])
+                ax.set_ylim([min(y), max(y)])
+                ax.set_zlim([min(z), max(z)])
+                
+                ax.set_xlabel('X')
+                ax.set_ylabel('Y')
+                ax.set_zlabel('Z')
+                if i % downsample == 0:
+                    ax.scatter(x.head(i), y.head(i), z.head(i), alpha = .1, color = 'grey')
+                    #take frame
+                    writer.grab_frame()
+                    #clear to make it run faster
+                    ax.clear()
+                    
+                else:
+                    continue
+
+#%%
+
+def ReadInShit(dirpath):
+    import pandas as pd
+    df = pd.read_csv(dirpath + '/impactchain.dat', header = None, delimiter = '\s+',
+	    names = ['logp','impactnum','time','mom','whatever','who??','coslat', 'longi', 'face', 'xloc','yloc','zloc'])
+
+    mednmom = np.median(df['mom'])
+    mednmom = "{:.4e}".format(mednmom)
+    
+    return mednmom, df
+
+
+
+#%%
+import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
+dirpath = "/Users/corinnekomlodi/Desktop/MessingWithLPF/1144228507" #1150509781
 
-def annotate_axes(ax, text, fontsize=18):
-    ax.text(x=0.5, y=0.5, z=0.5, s=text,
-            va="center", ha="center", fontsize=fontsize, color="black")
+df = pd.read_csv(dirpath + '/impactchain.dat', header = None, delimiter = '\s+',
+	    names = ['logp','impactnum','time','mom','whatever','who??','coslat', 'longi', 'face', 'xloc','yloc','zloc'])
 
-# (plane, (elev, azim, roll))
-views = [('XY',   (90, -90, 0)),
-         ('XZ',    (0, -90, 0)),
-         ('YZ',    (0,   0, 0)),
-         ('-XY', (-90,  90, 0)),
-         ('-XZ',   (0,  90, 0)),
-         ('-YZ',   (0, 180, 0))]
-
-layout = [['XY',  '.',   'L',   '.'],
-          ['XZ', 'YZ', '-XZ', '-YZ'],
-          ['.',   '.', '-XY',   '.']]
-fig, axd = plt.subplot_mosaic(layout, subplot_kw={'projection': '3d'},
-                              figsize=(12, 8.5))
-for plane, angles in views:
-    axd[plane].set_xlabel('x')
-    axd[plane].set_ylabel('y')
-    axd[plane].set_zlabel('z')
-    axd[plane].set_proj_type('ortho')
-    axd[plane].view_init(elev=angles[0], azim=angles[1], roll=angles[2])
-    axd[plane].set_box_aspect(None, zoom=1.25)
-
-    label = f'{plane}\n{angles}'
-    annotate_axes(axd[plane], label, fontsize=14)
-
-for plane in ('XY', '-XY'):
-    axd[plane].set_zticklabels([])
-    axd[plane].set_zlabel('')
-for plane in ('XZ', '-XZ'):
-    axd[plane].set_yticklabels([])
-    axd[plane].set_ylabel('')
-for plane in ('YZ', '-YZ'):
-    axd[plane].set_xticklabels([])
-    axd[plane].set_xlabel('')
-
-label = 'mplot3d primary view planes\n' + 'ax.view_init(elev, azim, roll)'
-annotate_axes(axd['L'], label, fontsize=18)
-axd['L'].set_axis_off()
-
-plt.show()
-
-
-#%%
-from scipy.stats import gaussian_kde
+mednmom = np.median(df['mom'])
+mednmom = "{:.4e}".format(mednmom)
 
 x = df['xloc']
 y = df['yloc']
 z = df['zloc']
 
-kde = gaussian_kde(np.vstack([x, y, z]))
-density = kde(np.vstack([x, y, z]))
+mp4name = '3dscatter2.mp4'
+downsample = 1000
+#D3scatter(x, y, z, mp4name, downsample)
+
+#%%
+
+x = df['xloc'].tail(70000)
+y = df['yloc'].tail(70000)
+z = df['zloc'].tail(70000)
+
+from scipy.stats import gaussian_kde
+
+fig = plt.figure(figsize = (15,5))
+ax = fig.add_subplot(111, projection = '3d')
+# Combine data points into a single array
+data = np.vstack([x, y, z])
+
+# Calculate the density of the points using a Gaussian KDE
+kde = gaussian_kde(data)
+density = kde(data)  # Compute the density for each point
+
+# Normalize density for colormap
+norm = plt.Normalize(vmin=density.min(), vmax=density.max())
+
+scatter = ax.scatter(x, y, z, c=density, cmap='viridis', norm=norm)
+
+# Add a colorbar
+fig.colorbar(scatter)
+
+# Set labels and title
+ax.set_xlim([-1,1])
+ax.set_ylim([-1,1])
+ax.set_zlim([-1,1])
+
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+ax.set_title('3D Scatter Plot with Density Colormap')
+
+plt.show()
 
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1, projection='3d')
-ax.scatter(x, y, z, c = density, cmap='Blues')
+
 
 
